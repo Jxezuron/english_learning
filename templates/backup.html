@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Export & Database Backup - English Learning Platform{% endblock %}
+{% block content %}
+<div style="max-width:850px;margin:0 auto;">
+  <div class="card" style="margin-bottom:24px;">
+    <span class="badge badge-a1" style="margin-bottom:6px;">Data Sovereignty & Portability</span>
+    <h1 style="font-size:2rem;margin-bottom:6px;">Export & Database Backup Center</h1>
+    <p style="color:var(--text-muted);font-size:0.95rem;">
+      Export your learning artifacts, download offline backups of your database, or restore your progress seamlessly.
+    </p>
+  </div>
+
+  <!-- Multi-Format Data Exports -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-file-export" style="color:var(--primary);"></i> Student Data Exports
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <!-- Export Vocab CSV -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+        <div>
+          <strong style="color:#0f172a;"><i class="fas fa-file-csv" style="color:#16a34a;"></i> Vocabulary Dictionary & Spaced Repetition (CSV)</strong>
+          <div style="font-size:0.85rem;color:var(--text-muted);">Includes words, Khmer translations, definitions, intervals, and repetitions.</div>
+        </div>
+        <a href="{{ url_for('backup.export_vocabulary_csv') }}" class="btn btn-outline btn-sm">
+          <i class="fas fa-download"></i> Download CSV
+        </a>
+      </div>
+
+      <!-- Export Mistakes CSV -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+        <div>
+          <strong style="color:#0f172a;"><i class="fas fa-file-csv" style="color:#dc2626;"></i> Personal Mistake Notebook (CSV)</strong>
+          <div style="font-size:0.85rem;color:var(--text-muted);">Catalog of all past errors, correct answers, categories, and explanations.</div>
+        </div>
+        <a href="{{ url_for('backup.export_mistakes_csv') }}" class="btn btn-outline btn-sm">
+          <i class="fas fa-download"></i> Download CSV
+        </a>
+      </div>
+
+      <!-- Export Speaking TXT -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+        <div>
+          <strong style="color:#0f172a;"><i class="fas fa-file-alt" style="color:#3b82f6;"></i> Saved Speaking Speeches & Outlines (TXT)</strong>
+          <div style="font-size:0.85rem;color:var(--text-muted);">Full transcripts, speech durations, outlines, and pedagogical feedback.</div>
+        </div>
+        <a href="{{ url_for('backup.export_speaking_txt') }}" class="btn btn-outline btn-sm">
+          <i class="fas fa-download"></i> Download TXT
+        </a>
+      </div>
+
+      <!-- Export Progress JSON -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+        <div>
+          <strong style="color:#0f172a;"><i class="fas fa-code" style="color:#f59e0b;"></i> Comprehensive Learning Analytics (JSON)</strong>
+          <div style="font-size:0.85rem;color:var(--text-muted);">Machine-readable progress metrics, accuracy percentages, and achievements.</div>
+        </div>
+        <a href="{{ url_for('backup.export_progress_json') }}" class="btn btn-outline btn-sm">
+          <i class="fas fa-download"></i> Download JSON
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database SQL Backup & Restore -->
+  <div class="card" style="margin-bottom:40px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-database" style="color:var(--secondary);"></i> SQLite Database Backup & Restore
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Backup Section -->
+      <div style="padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+          <h4 style="margin-bottom:8px;color:#0f172a;">Full SQL Snapshot</h4>
+          <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.5;margin-bottom:16px;">
+            Generates a complete SQL dump of all database tables, user records, lesson progress, and vocabulary histories.
+          </p>
+        </div>
+        <div>
+          <a href="{{ url_for('backup.download_database_backup') }}" class="btn btn-secondary btn-sm" style="width:100%;">
+            <i class="fas fa-cloud-download-alt"></i> Download Database Backup (.sql)
+          </a>
+        </div>
+      </div>
+
+      <!-- Restore Section -->
+      <div style="padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+        <h4 style="margin-bottom:8px;color:#0f172a;">Restore from SQL File</h4>
+        <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.5;margin-bottom:12px;">
+          Upload a previously generated .sql backup to restore your learning platform data.
+        </p>
+        <form action="{{ url_for('backup.restore_database') }}" method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="form-group">
+            <input type="file" name="backup_file" accept=".sql" required class="form-control" style="font-size:0.85rem;padding:6px;">
+          </div>
+          <button type="submit" class="btn btn-outline btn-sm" style="width:100%;" onclick="return confirm('Restoring will execute the uploaded SQL script against the database. Do you wish to proceed?')">
+            <i class="fas fa-cloud-upload-alt"></i> Restore Database
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

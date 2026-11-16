@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Account Settings & Goals - English Learning Platform{% endblock %}
+{% block content %}
+<div style="max-width:750px;margin:0 auto;">
+  <div class="card" style="margin-bottom:24px;">
+    <span class="badge badge-a1" style="margin-bottom:6px;">Student Profile</span>
+    <h1 style="font-size:2rem;margin-bottom:6px;">Account Settings & Learning Goals</h1>
+    <p style="color:var(--text-muted);font-size:0.95rem;">Configure your personal study parameters, speech speed, and account security.</p>
+  </div>
+
+  <!-- Profile Info Ribbon -->
+  <div class="grid-3" style="margin-bottom:24px;">
+    <div class="card" style="text-align:center;padding:16px;">
+      <div style="font-size:1.8rem;font-weight:800;color:var(--primary);">{{ user.username }}</div>
+      <div style="font-size:0.8rem;text-transform:uppercase;color:var(--text-muted);">
+        {% if user.is_guest %}<span style="color:var(--accent);">Guest Account</span>{% else %}Registered Student{% endif %}
+      </div>
+    </div>
+    <div class="card" style="text-align:center;padding:16px;">
+      <div style="font-size:1.8rem;font-weight:800;color:var(--secondary);">{{ user.xp or 0 }} XP</div>
+      <div style="font-size:0.8rem;text-transform:uppercase;color:var(--text-muted);">Experience Points</div>
+    </div>
+    <div class="card" style="text-align:center;padding:16px;">
+      <div style="font-size:1.8rem;font-weight:800;color:var(--accent);">{{ user.streak_days or 1 }} Days</div>
+      <div style="font-size:0.8rem;text-transform:uppercase;color:var(--text-muted);">Current Streak</div>
+    </div>
+  </div>
+
+  <!-- Study Goals & Audio Settings -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-bullseye" style="color:var(--primary);"></i> Daily Learning Targets & Speech Settings
+      </div>
+    </div>
+
+    <form action="{{ url_for('auth.profile') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="update_goals">
+
+      <div class="grid-2" style="margin-bottom:14px;">
+        <div class="form-group">
+          <label class="form-label">Daily Study Target (Minutes)</label>
+          <input type="number" name="daily_goal_minutes" class="form-control" value="{{ user.daily_goal_minutes or 20 }}" min="5" max="180">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vocabulary Flashcards / Day</label>
+          <input type="number" name="daily_goal_words" class="form-control" value="{{ user.daily_goal_words or 10 }}" min="1" max="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grammar Lessons / Day</label>
+          <input type="number" name="daily_goal_lessons" class="form-control" value="{{ user.daily_goal_lessons or 1 }}" min="1" max="10">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Speaking Speeches / Day</label>
+          <input type="number" name="daily_goal_speaking" class="form-control" value="{{ user.daily_goal_speaking or 1 }}" min="1" max="10">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:20px;">
+        <label class="form-label">Preferred Text-to-Speech Speed</label>
+        <select name="voice_speed" class="form-control">
+          <option value="0.8" {% if user.voice_speed == 0.8 %}selected{% endif %}>0.8x - Slower (Ideal for phonetic listening)</option>
+          <option value="1.0" {% if user.voice_speed == 1.0 or not user.voice_speed %}selected{% endif %}>1.0x - Standard Natural Rate</option>
+          <option value="1.2" {% if user.voice_speed == 1.2 %}selected{% endif %}>1.2x - Faster (Advanced comprehension challenge)</option>
+        </select>
+      </div>
+
+      <div style="text-align:right;">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Save Profile Settings
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Security: Change Password -->
+  <div class="card" style="margin-bottom:40px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-key" style="color:var(--secondary);"></i> Update Password
+      </div>
+    </div>
+
+    <form action="{{ url_for('auth.profile') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="change_password">
+
+      <div class="form-group">
+        <label class="form-label">Current Password</label>
+        <input type="password" name="old_password" class="form-control" placeholder="Enter current password" required>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input type="password" name="new_password" class="form-control" placeholder="At least 6 characters" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm New Password</label>
+          <input type="password" name="confirm_password" class="form-control" placeholder="Repeat new password" required minlength="6">
+        </div>
+      </div>
+
+      <div style="text-align:right;">
+        <button type="submit" class="btn btn-outline">
+          <i class="fas fa-lock"></i> Change Password
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

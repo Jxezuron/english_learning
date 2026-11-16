@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Personal Learning Analytics & Achievements - English Learning Platform{% endblock %}
+{% block content %}
+<!-- Header Bar -->
+<div class="card" style="margin-bottom:24px;">
+  <span class="badge badge-a1" style="margin-bottom:6px;">Performance Insights</span>
+  <h1 style="font-size:2rem;margin-bottom:6px;">Learning Analytics & Achievements</h1>
+  <p style="color:var(--text-muted);font-size:0.95rem;">
+    Objective data tracking your learning duration, grammatical precision, spaced retention, and milestone badges.
+  </p>
+</div>
+
+<!-- Primary Metrics Ribbon -->
+<div class="grid-4" style="margin-bottom:24px;">
+  <div class="card" style="text-align:center;padding:16px;">
+    <div style="font-size:2rem;font-weight:800;color:var(--primary);">{{ analytics.total_learning_mins }}m</div>
+    <div style="font-size:0.8rem;text-transform:uppercase;color:var(--text-muted);">Total Learning Time</div>
+  </div>
+  <div class="card" style="text-align:center;padding:16px;">
+    <div style="font-size:2rem;font-weight:800;color:var(--secondary);">{{ analytics.grammar_accuracy }}%</div>
+    <div style="font-size:0.8rem;text-transform:uppercase;color:var(--text-muted);">Grammar Accuracy</div>
+  </div>
+  <div class="card" style="text-align:center;padding:16px;">
+    <div style="font-size:2rem;font-weight:800;color:var(--accent);">{{ analytics.vocab_stats.retention_rate }}%</div>
+    <div style="font-size:0.8rem;text-transform:uppercase;color:var(--text-muted);">Vocab Retention</div>
+  </div>
+  <div class="card" style="text-align:center;padding:16px;">
+    <div style="font-size:2rem;font-weight:800;color:#7c3aed;">{{ analytics.speaking_count }}</div>
+    <div style="font-size:0.8rem;text-transform:uppercase;color:var(--text-muted);">Speeches Delivered</div>
+  </div>
+</div>
+
+<!-- Charts Row 1: Weekly Activity & Retention Donut -->
+<div class="grid-2" style="margin-bottom:24px;">
+  <!-- Weekly XP & Activity Chart -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-chart-bar" style="color:var(--primary);"></i> Weekly Learning Activity (Last 7 Days)
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <canvas id="weeklyActivityCanvas" width="500" height="220" style="width:100%;max-width:500px;height:auto;"></canvas>
+    </div>
+  </div>
+
+  <!-- Vocabulary Retention Donut -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-brain" style="color:var(--secondary);"></i> Vocabulary Retention Balance
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <canvas id="vocabDonutCanvas" width="500" height="220" style="width:100%;max-width:500px;height:auto;"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row 2: Category Grammar Diagnostics -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-tasks" style="color:var(--primary);"></i> Grammar Topic Accuracy Diagnostics (Weakest to Strongest)
+    </div>
+  </div>
+  <div>
+    <canvas id="categoryBarsCanvas" width="850" height="240" style="width:100%;height:auto;"></canvas>
+  </div>
+</div>
+
+<!-- Gamification Achievement Badges Gallery -->
+<div class="card" style="margin-bottom:40px;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-trophy" style="color:#f59e0b;"></i> Milestone Badges & Achievements ({{ analytics.unlocked_achievements_count }} / {{ analytics.total_achievements }} Unlocked)
+    </div>
+  </div>
+  
+  <div class="grid-3">
+    {% for ach in analytics.achievements %}
+      <div style="padding:16px;border-radius:8px;border:1px solid {% if ach.unlocked_at %}#86efac;background:#f0fdf4{% else %}#e2e8f0;background:#f8fafc;opacity:0.75{% endif %};display:flex;align-items:flex-start;gap:12px;">
+        <div style="font-size:2rem;color:{% if ach.unlocked_at %}#16a34a{% else %}#94a3b8{% endif %};">
+          <i class="{{ ach.badge_icon }}"></i>
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong style="font-size:1rem;color:#0f172a;">{{ ach.title }}</strong>
+            {% if ach.unlocked_at %}
+              <span class="badge" style="background:#dcfce7;color:#15803d;font-size:0.7rem;">Unlocked</span>
+            {% else %}
+              <span class="badge" style="background:#f1f5f9;color:#64748b;font-size:0.7rem;">Target: {{ ach.target_value }}</span>
+            {% endif %}
+          </div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:2px;">
+            {{ ach.description }}
+          </div>
+          {% if ach.unlocked_at %}
+            <div style="font-size:0.75rem;color:#16a34a;margin-top:4px;">
+              Earned on {{ ach.unlocked_at[:10] }}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Weekly Activity Chart
+    const weeklyData = {{ analytics.weekly_activity|tojson|safe }};
+    LearningCharts.renderWeeklyActivity('weeklyActivityCanvas', weeklyData);
+
+    // 2. Retention Donut
+    const vStats = {{ analytics.vocab_stats|tojson|safe }};
+    LearningCharts.renderRetentionDonut('vocabDonutCanvas', vStats.mastered_words, vStats.learning_words, vStats.new_words);
+
+    // 3. Category Bars
+    const catData = {{ analytics.category_performance|tojson|safe }};
+    LearningCharts.renderCategoryBars('categoryBarsCanvas', catData);
+  });
+</script>
+{% endblock %}

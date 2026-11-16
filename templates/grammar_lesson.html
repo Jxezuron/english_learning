@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}{{ lesson.title }} - Grammar Lesson{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+  <!-- Navigation Header -->
+  <div style="margin-bottom:18px;">
+    <a href="{{ url_for('grammar.index') }}" class="btn btn-outline btn-sm">
+      <i class="fas fa-arrow-left"></i> Back to Lessons Directory
+    </a>
+  </div>
+
+  <!-- Lesson Overview Card -->
+  <div class="card" style="margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <span class="badge badge-{{ lesson.cefr_level|lower }}">{{ lesson.cefr_level }} Level</span>
+      <span class="badge badge-b1">{{ lesson.category }}</span>
+    </div>
+
+    <h1 style="font-size:2.4rem;color:#0f172a;margin-bottom:12px;">{{ lesson.title }}</h1>
+    <p style="font-size:1.1rem;color:var(--text-muted);margin-bottom:18px;">{{ lesson.summary }}</p>
+
+    {% if lesson.formula %}
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-left:5px solid var(--primary);padding:14px 18px;border-radius:8px;margin-bottom:20px;">
+        <div style="font-size:0.85rem;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:4px;">Grammatical Formula</div>
+        <div style="font-family:monospace;font-size:1.05rem;font-weight:600;color:#1e3a8a;">
+          {{ lesson.formula }}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Explanation Body -->
+    <div style="font-size:1.05rem;line-height:1.8;color:#334155;margin-bottom:24px;">
+      {{ lesson.explanation_markdown|replace('### ', '<h3 style="font-size:1.3rem;margin:18px 0 8px 0;color:#0f172a;">')|replace('#### ', '<h4 style="font-size:1.1rem;margin:14px 0 6px 0;color:#1e293b;">')|replace('**', '<strong>')|replace('*', '<em>')|replace('\n', '<br>')|safe }}
+    </div>
+
+    {% if lesson.tips %}
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-left:4px solid var(--accent);padding:12px 16px;border-radius:6px;font-size:0.95rem;color:#78350f;">
+        <i class="fas fa-lightbulb"></i> <strong>Pro Tip:</strong> {{ lesson.tips }}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Real-World Examples with Khmer Translations -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-volume-up" style="color:var(--secondary);"></i> Real-World Examples & Khmer Translations
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      {% for ex in lesson.examples %}
+        <div style="padding:14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+            <div style="font-size:1.1rem;font-weight:700;color:#0f172a;">
+              {{ ex.en }}
+            </div>
+            <button onclick="speakEnglish('{{ ex.en|replace("'", "\\'") }}')" class="btn btn-outline btn-sm" title="Listen to pronunciation">
+              <i class="fas fa-volume-up"></i> Listen
+            </button>
+          </div>
+          <div class="text-khmer" style="font-size:1.15rem;margin-bottom:6px;">
+            {{ ex.km }}
+          </div>
+          {% if ex.note %}
+            <div style="font-size:0.85rem;color:var(--text-muted);">
+              <em>Note: {{ ex.note }}</em>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Common Mistakes vs Correct Usage -->
+  {% if lesson.common_mistakes %}
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fas fa-times-circle" style="color:var(--danger);"></i> Common ESL Mistakes & Corrections
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        {% for m in lesson.common_mistakes %}
+          <div style="padding:14px;background:#fff;border-radius:8px;border:1px solid #e2e8f0;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px;">
+              <div style="color:#b91c1c;background:#fef2f2;padding:8px 12px;border-radius:6px;font-size:0.95rem;">
+                <i class="fas fa-times"></i> <strong>Incorrect:</strong> {{ m.wrong }}
+              </div>
+              <div style="color:#15803d;background:#f0fdf4;padding:8px 12px;border-radius:6px;font-size:0.95rem;">
+                <i class="fas fa-check"></i> <strong>Correct:</strong> {{ m.correct }}
+              </div>
+            </div>
+            <div style="font-size:0.88rem;color:#475569;">
+              <strong>Reason:</strong> {{ m.reason }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Interactive Quiz Section -->
+  <div class="card" style="margin-bottom:40px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-question-circle" style="color:var(--primary);"></i> Lesson Mastery Quiz
+      </div>
+      <span style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">Earn 10 XP per correct question</span>
+    </div>
+
+    <form action="{{ url_for('grammar.submit_quiz', lesson_id=lesson.id) }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      {% for q in quizzes %}
+        <div style="padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;">
+          <div style="font-weight:700;font-size:1.05rem;color:#0f172a;margin-bottom:12px;">
+            {{ loop.index }}. {{ q.question }}
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            {% for opt in q.options %}
+              <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;">
+                <input type="radio" name="q_{{ q.id }}" value="{{ opt }}" required>
+                <span>{{ opt }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+
+      <div style="text-align:right;">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-paper-plane"></i> Submit Quiz Answers
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

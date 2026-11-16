@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Vocabulary Dictionary & Word Bank - English Learning Platform{% endblock %}
+{% block content %}
+<!-- Header Bar -->
+<div class="card" style="margin-bottom:24px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <div>
+      <span class="badge badge-a1" style="margin-bottom:6px;">Lexical Resource</span>
+      <h1 style="font-size:2rem;margin-bottom:6px;">Vocabulary Dictionary & Word Bank</h1>
+      <p style="color:var(--text-muted);font-size:0.95rem;">
+        Search curated high-frequency vocabulary across Beginner, Intermediate, and Upper-Intermediate CEFR bands.
+      </p>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <a href="{{ url_for('vocabulary.index') }}" class="btn btn-outline btn-sm">
+        <i class="fas fa-layer-group"></i> Spaced Repetition Mode
+      </a>
+      <a href="{{ url_for('backup.export_vocabulary_csv') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-file-csv"></i> Export Word Bank (CSV)
+      </a>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <form action="{{ url_for('vocabulary.dictionary') }}" method="GET" style="margin-top:18px;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;">
+      <input type="text" name="q" class="form-control" placeholder="Search English word, definition, or Khmer..." value="{{ search }}">
+      <select name="category" class="form-control">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+      <select name="difficulty" class="form-control">
+        <option value="">All Levels</option>
+        <option value="Beginner" {% if selected_difficulty == 'Beginner' %}selected{% endif %}>Beginner (A1-A2)</option>
+        <option value="Intermediate" {% if selected_difficulty == 'Intermediate' %}selected{% endif %}>Intermediate (B1)</option>
+        <option value="Upper-Intermediate" {% if selected_difficulty == 'Upper-Intermediate' %}selected{% endif %}>Upper-Intermediate (B2)</option>
+      </select>
+      <button type="submit" class="btn btn-secondary">
+        <i class="fas fa-filter"></i> Filter
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Words Grid / Cards -->
+<div style="display:flex;flex-direction:column;gap:14px;margin-bottom:40px;">
+  {% for w in words %}
+    <div class="card" style="padding:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+            <h3 style="font-size:1.35rem;color:var(--primary-dark);">{{ w.word }}</h3>
+            <span style="font-family:monospace;color:var(--text-muted);font-size:1rem;">{{ w.phonetic }}</span>
+            <span style="font-style:italic;color:var(--secondary);font-size:0.9rem;">{{ w.part_of_speech }}</span>
+            <span class="badge badge-{{ w.difficulty_level[:2]|lower }}">{{ w.difficulty_level }}</span>
+            <span class="badge badge-b1">{{ w.category }}</span>
+          </div>
+
+          <div style="font-size:1.05rem;color:#1e293b;margin-bottom:6px;">
+            <strong>Definition:</strong> {{ w.definition_en }}
+          </div>
+
+          <div class="text-khmer" style="font-size:1.15rem;margin-bottom:6px;">
+            <strong>Khmer:</strong> {{ w.definition_km }}
+          </div>
+
+          <div style="font-size:0.92rem;color:#475569;background:#f8fafc;padding:8px 12px;border-radius:6px;border-left:3px solid var(--primary);">
+            <strong>Example:</strong> "{{ w.example_sentence }}"
+          </div>
+        </div>
+
+        <!-- Controls: Audio, Favorite, SRS Status -->
+        <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+          <div style="display:flex;gap:6px;">
+            <button onclick="speakEnglish('{{ w.word|replace("'", "\\'") }}')" class="btn btn-outline btn-sm" title="Listen to pronunciation">
+              <i class="fas fa-volume-up"></i>
+            </button>
+            <button onclick="toggleFavoriteWord({{ w.id }}, this)" class="btn btn-outline btn-sm" title="Toggle Favorite">
+              <i class="{% if w.is_favorite %}fas fa-star" style="color:#f59e0b;{% else %}far fa-star{% endif %}"></i>
+            </button>
+          </div>
+
+          <div style="font-size:0.8rem;color:var(--text-muted);">
+            {% if w.repetition_count and w.repetition_count > 0 %}
+              <span style="color:#15803d;font-weight:600;"><i class="fas fa-brain"></i> Reps: {{ w.repetition_count }} (Interval: {{ w.interval_days }}d)</span>
+            {% else %}
+              <span style="color:#64748b;">New card</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="card" style="text-align:center;padding:40px;">
+      <p style="color:var(--text-muted);">No vocabulary matched your search query.</p>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function toggleFavoriteWord(vocabId, btn) {
+    try {
+      const res = await postData(`/vocabulary/favorite/${vocabId}`, {});
+      const icon = btn.querySelector('i');
+      if (res.is_favorite) {
+        icon.className = 'fas fa-star';
+        icon.style.color = '#f59e0b';
+        showToast("Word bookmarked in favorites!", "info");
+      } else {
+        icon.className = 'far fa-star';
+        icon.style.color = '';
+        showToast("Removed from favorites", "info");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+</script>
+{% endblock %}

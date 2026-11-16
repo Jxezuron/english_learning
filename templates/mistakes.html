@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Personal Mistake Notebook - English Learning Platform{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:24px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <div>
+      <span class="badge badge-a1" style="margin-bottom:6px;">Error Analysis & Correction</span>
+      <h1 style="font-size:2rem;margin-bottom:6px;">Personal Mistake Notebook</h1>
+      <p style="color:var(--text-muted);font-size:0.95rem;">
+        Mistakes are stepping stones to fluency. Errors from your quizzes, placement test, and listening comprehension are preserved here for systematic review and retry.
+      </p>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <a href="{{ url_for('backup.export_mistakes_csv') }}" class="btn btn-outline btn-sm">
+        <i class="fas fa-file-csv"></i> Export Notebook (CSV)
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Ribbon -->
+  <form action="{{ url_for('mistakes.index') }}" method="GET" style="margin-top:18px;">
+    <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:12px;">
+      <select name="category" class="form-control">
+        <option value="">All Grammar Categories ({{ counts.total or 0 }})</option>
+        {% for cat in categories %}
+          <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="status" class="form-control">
+        <option value="all" {% if selected_status == 'all' %}selected{% endif %}>All Statuses</option>
+        <option value="unresolved" {% if selected_status == 'unresolved' %}selected{% endif %}>Unresolved Only ({{ counts.unresolved or 0 }})</option>
+        <option value="understood" {% if selected_status == 'understood' %}selected{% endif %}>Understood ({{ counts.understood or 0 }})</option>
+      </select>
+
+      <button type="submit" class="btn btn-secondary">
+        <i class="fas fa-filter"></i> Filter
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Mistake Items List -->
+{% if mistakes %}
+  <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:40px;">
+    {% for m in mistakes %}
+      <div class="card" id="mistake-card-{{ m.id }}" style="border-left:5px solid {% if m.is_understood %}var(--success){% else %}var(--danger){% endif %};">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div>
+            <span class="badge badge-b1">{{ m.grammar_category }}</span>
+            <span class="badge badge-a1" style="margin-left:6px;">{{ m.source_module }}</span>
+            <span style="font-size:0.8rem;color:var(--text-muted);margin-left:8px;">{{ m.created_at[:16] }}</span>
+          </div>
+
+          <div>
+            <button onclick="toggleUnderstoodState({{ m.id }}, this)" 
+                    class="btn btn-sm {% if m.is_understood %}btn-outline{% else %}btn-secondary{% endif %}"
+                    title="Toggle understood status">
+              <i class="fas {% if m.is_understood %}fa-check-double{% else %}fa-check{% endif %}"></i>
+              <span>{% if m.is_understood %}Marked as Understood{% else %}Mark as Understood{% endif %}</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="font-size:1.1rem;font-weight:700;color:#0f172a;margin-bottom:10px;">
+          {{ m.question_text }}
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
+          <div style="background:#fef2f2;color:#991b1b;padding:8px 12px;border-radius:6px;font-size:0.9rem;">
+            <strong>Your submitted answer:</strong> {{ m.student_answer }}
+          </div>
+          <div style="background:#f0fdf4;color:#15803d;padding:8px 12px;border-radius:6px;font-size:0.9rem;">
+            <strong>Correct answer:</strong> {{ m.correct_answer }}
+          </div>
+        </div>
+
+        <div style="font-size:0.9rem;color:#334155;background:#f8fafc;padding:10px 14px;border-radius:6px;border:1px solid #e2e8f0;margin-bottom:12px;">
+          <strong>Grammatical Explanation:</strong> {{ m.explanation }}
+        </div>
+
+        <!-- Action Buttons: Retry Question & Practice Similar -->
+        <div style="display:flex;gap:10px;">
+          <button onclick="openRetryModal({{ m.id }}, '{{ m.question_text|replace("'", "\\'") }}', '{{ m.correct_answer|replace("'", "\\'") }}')" class="btn btn-outline btn-sm">
+            <i class="fas fa-redo"></i> Retry This Question
+          </button>
+          <button onclick="loadSimilarPractice({{ m.id }})" class="btn btn-outline btn-sm">
+            <i class="fas fa-lightbulb"></i> Practice Similar Question
+          </button>
+        </div>
+
+        <!-- Dynamic Similar Question Box -->
+        <div id="similar-drill-{{ m.id }}" style="display:none;margin-top:14px;padding:14px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe;"></div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card" style="text-align:center;padding:50px 20px;">
+    <div style="font-size:3.5rem;color:var(--success);margin-bottom:12px;"><i class="fas fa-award"></i></div>
+    <h2 style="margin-bottom:8px;">Zero Mistakes Found!</h2>
+    <p style="color:var(--text-muted);margin-bottom:20px;">Your notebook has no active mistakes matching this filter.</p>
+    <a href="{{ url_for('grammar.index') }}" class="btn btn-primary">Take a Grammar Quiz</a>
+  </div>
+{% endif %}
+
+<!-- Simple Retry Modal (Interactive) -->
+<div id="retry-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+  <div class="card" style="width:90%;max-width:550px;background:#ffffff;padding:24px;">
+    <div class="card-header">
+      <div class="card-title">Retry Question</div>
+      <button onclick="closeRetryModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;">&times;</button>
+    </div>
+    <div id="retry-modal-question" style="font-size:1.1rem;font-weight:600;margin-bottom:16px;"></div>
+    <div class="form-group">
+      <label class="form-label">Type your corrected answer:</label>
+      <input type="text" id="retry-answer-input" class="form-control" placeholder="Correct answer...">
+    </div>
+    <div id="retry-feedback-msg" style="margin-bottom:14px;font-size:0.9rem;"></div>
+    <div style="text-align:right;">
+      <button onclick="submitRetryAnswer()" class="btn btn-primary">Submit Correction</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let activeRetryMistakeId = null;
+
+  async function toggleUnderstoodState(mistakeId, btn) {
+    try {
+      const res = await postData(`/mistakes/${mistakeId}/understood`, {});
+      const span = btn.querySelector('span');
+      const icon = btn.querySelector('i');
+      if (res.is_understood === 1) {
+        btn.className = 'btn btn-sm btn-outline';
+        span.textContent = 'Marked as Understood';
+        icon.className = 'fas fa-check-double';
+        document.getElementById(`mistake-card-${mistakeId}`).style.borderLeftColor = 'var(--success)';
+        showToast("Marked as understood! (+10 XP)", "success");
+      } else {
+        btn.className = 'btn btn-sm btn-secondary';
+        span.textContent = 'Mark as Understood';
+        icon.className = 'fas fa-check';
+        document.getElementById(`mistake-card-${mistakeId}`).style.borderLeftColor = 'var(--danger)';
+        showToast("Returned to unresolved mistakes", "info");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function openRetryModal(id, qText) {
+    activeRetryMistakeId = id;
+    document.getElementById('retry-modal-question').textContent = qText;
+    document.getElementById('retry-answer-input').value = '';
+    document.getElementById('retry-feedback-msg').innerHTML = '';
+    document.getElementById('retry-modal').style.display = 'flex';
+  }
+
+  function closeRetryModal() {
+    document.getElementById('retry-modal').style.display = 'none';
+  }
+
+  async function submitRetryAnswer() {
+    const val = document.getElementById('retry-answer-input').value.trim();
+    if (!val) return;
+    try {
+      const res = await postData(`/mistakes/${activeRetryMistakeId}/retry`, { answer: val });
+      const msgBox = document.getElementById('retry-feedback-msg');
+      if (res.is_correct) {
+        msgBox.innerHTML = `<span style="color:#16a34a;font-weight:700;">${res.message}</span>`;
+        setTimeout(() => {
+          closeRetryModal();
+          location.reload();
+        }, 1200);
+      } else {
+        msgBox.innerHTML = `<span style="color:#dc2626;">${res.message}</span>`;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function loadSimilarPractice(id) {
+    const box = document.getElementById(`similar-drill-${id}`);
+    box.style.display = 'block';
+    box.innerHTML = '<em>Generating targeted similar grammar drill...</em>';
+    try {
+      const response = await fetch(`/mistakes/practice-similar/${id}`);
+      const drill = await response.json();
+      box.innerHTML = `
+        <div style="font-weight:700;color:#1e3a8a;margin-bottom:8px;">Targeted Practice Drill:</div>
+        <div style="font-size:1rem;margin-bottom:10px;">${drill.question}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          ${drill.options.map(opt => `
+            <button onclick="checkDrillAnswer(this, '${opt}', '${drill.correct_answer}', '${drill.explanation}')" class="btn btn-sm btn-outline" style="background:#fff;">
+              ${opt}
+            </button>
+          `).join('')}
+        </div>
+        <div class="drill-feedback" style="font-size:0.88rem;"></div>
+      `;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function checkDrillAnswer(btn, chosen, correct, exp) {
+    const parent = btn.closest('#similar-drill-' + btn.closest('.card').id.replace('mistake-card-', ''));
+    const fb = parent.querySelector('.drill-feedback');
+    if (chosen === correct) {
+      fb.innerHTML = `<span style="color:#16a34a;font-weight:700;">✅ Excellent! That's correct.</span> ${exp}`;
+    } else {
+      fb.innerHTML = `<span style="color:#dc2626;font-weight:700;">❌ Not quite.</span> Correct answer is <strong>${correct}</strong>: ${exp}`;
+    }
+  }
+</script>
+{% endblock %}

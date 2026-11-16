@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Speaking Presentation Studio - English Learning Platform{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:24px;">
+  <span class="badge badge-a1" style="margin-bottom:8px;">Oral Fluency Benchmark</span>
+  <h1 style="font-size:2.2rem;margin-bottom:8px;">2–3 Minute Speaking Presentation Studio</h1>
+  <p style="color:var(--text-muted);font-size:1.05rem;line-height:1.6;max-width:800px;">
+    True language confidence is demonstrated through structured oral delivery. Master the 4 core ESL presentation topics with outlines, transitional connectors, 30-second preparation countdowns, and live speech transcription.
+  </p>
+</div>
+
+<!-- 4 Topics Grid -->
+<div class="grid-2" style="margin-bottom:30px;">
+  {% for topic in topics %}
+    <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;border-top:4px solid var(--primary);">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <span class="badge badge-b1">Topic {{ topic.topic_number }}</span>
+          <span style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">
+            <i class="fas fa-clock"></i> {{ topic.duration_target }}
+          </span>
+        </div>
+
+        <h3 style="font-size:1.35rem;color:#0f172a;margin-bottom:6px;">
+          {{ topic.title }}
+        </h3>
+        <p style="font-size:0.95rem;color:var(--secondary);font-weight:600;margin-bottom:12px;">
+          {{ topic.subtitle }}
+        </p>
+        <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.5;margin-bottom:16px;">
+          {{ topic.overview }}
+        </p>
+      </div>
+
+      <div style="border-top:1px solid #e2e8f0;padding-top:14px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:0.85rem;color:#475569;">
+          <i class="fas fa-microphone"></i> <strong>{{ topic.submission_count }}</strong> Speeches Delivered
+        </span>
+        <a href="{{ url_for('speaking.topic_detail', topic_number=topic.topic_number) }}" class="btn btn-primary btn-sm">
+          Enter Speaking Workstation &rarr;
+        </a>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Recent Submissions History -->
+{% if recent_submissions %}
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-history" style="color:var(--secondary);"></i> Your Recent Speaking Presentations
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      {% for sub in recent_submissions %}
+        <div style="padding:14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <span class="badge badge-a1">{{ sub.topic_title }}</span>
+            <h4 style="font-size:1.05rem;color:#0f172a;margin:4px 0;">{{ sub.presentation_title or 'Speech Presentation' }}</h4>
+            <div style="font-size:0.85rem;color:var(--text-muted);">
+              Duration: {{ sub.duration_seconds // 60 }}:{{ '%02d' % (sub.duration_seconds % 60) }} &bull; Rating: {{ sub.self_rating }}/5 &bull; Date: {{ sub.created_at[:16] }}
+            </div>
+            {% if sub.feedback_notes %}
+              <div style="font-size:0.85rem;color:#047857;margin-top:4px;">
+                <strong>Feedback:</strong> {{ sub.feedback_notes }}
+              </div>
+            {% endif %}
+          </div>
+          <div>
+            <a href="{{ url_for('backup.export_speaking_txt') }}" class="btn btn-outline btn-sm">
+              <i class="fas fa-download"></i> Export TXT
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.title }} - Speaking Workstation{% endblock %}
+{% block content %}
+<div style="max-width:960px;margin:0 auto;">
+  <!-- Navigation Header -->
+  <div style="margin-bottom:16px;">
+    <a href="{{ url_for('speaking.index') }}" class="btn btn-outline btn-sm">
+      <i class="fas fa-arrow-left"></i> Back to Speaking Topics
+    </a>
+  </div>
+
+  <!-- Topic Title Card -->
+  <div class="card" style="margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span class="badge badge-b1">Topic {{ topic.topic_number }}</span>
+      <span class="badge badge-a1"><i class="fas fa-clock"></i> Target: {{ topic.duration_target }}</span>
+    </div>
+    <h1 style="font-size:2.2rem;color:#0f172a;margin-bottom:6px;">{{ topic.title }}</h1>
+    <p style="font-size:1.1rem;color:var(--secondary);font-weight:600;margin-bottom:14px;">{{ topic.subtitle }}</p>
+    <p style="font-size:0.95rem;color:var(--text-muted);line-height:1.6;">{{ topic.overview }}</p>
+  </div>
+
+  <!-- Speech Presentation Timer & Audio Studio Widget -->
+  <div class="timer-widget">
+    <div style="font-size:0.9rem;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;" id="timer-status">
+      Target Presentation: 2:00 – 3:00 Minutes
+    </div>
+
+    <div class="timer-display" id="timer-display">0:00</div>
+
+    <div class="timer-progress">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:16px;">
+      <button class="btn btn-outline" id="prep-timer-btn" style="color:#ffffff;border-color:#475569;">
+        <i class="fas fa-stopwatch"></i> 30s Prep Timer
+      </button>
+      <button class="btn btn-secondary" id="start-speaking-btn">
+        <i class="fas fa-play"></i> Start Presentation
+      </button>
+      <button class="btn btn-outline" id="pause-speaking-btn" style="color:#ffffff;border-color:#475569;" disabled>
+        <i class="fas fa-pause"></i> Pause
+      </button>
+      <button class="btn btn-outline" id="reset-speaking-btn" style="color:#ffffff;border-color:#475569;">
+        <i class="fas fa-redo"></i> Reset
+      </button>
+    </div>
+  </div>
+
+  <!-- Speech Structure Roadmap -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-sitemap" style="color:var(--primary);"></i> 2–3 Minute Speech Structure Roadmap
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      {% for sec in topic.structure %}
+        <div style="padding:14px;background:#f8fafc;border-left:4px solid var(--primary);border-radius:6px;border:1px solid #e2e8f0;border-left-width:4px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <strong style="font-size:1.05rem;color:#0f172a;">{{ sec.section }}</strong>
+            <span class="badge badge-a2">{{ sec.target_time }}</span>
+          </div>
+          <div style="font-size:0.9rem;color:#334155;margin-bottom:8px;">
+            <strong>Guiding Goal:</strong> {{ sec.guiding_questions }}
+          </div>
+          {% if sec.key_phrases %}
+            <div style="background:#ffffff;padding:8px 12px;border-radius:6px;border:1px dashed #cbd5e1;font-size:0.85rem;color:#0f766e;">
+              <strong>Key Delivery Phrases:</strong> {{ sec.key_phrases|join(' &bull; ') }}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Topic Key Vocabulary (with Khmer translation & audio) -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-spell-check" style="color:var(--accent);"></i> Topic High-Utility Vocabulary
+      </div>
+    </div>
+    <div class="grid-2">
+      {% for v in topic.vocabulary %}
+        <div style="padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <strong style="font-size:1.1rem;color:var(--primary-dark);">{{ v.word }}</strong>
+            <button onclick="speakEnglish('{{ v.word }}')" class="btn btn-outline btn-sm" style="padding:2px 8px;" title="Listen">
+              <i class="fas fa-volume-up"></i>
+            </button>
+          </div>
+          <div class="text-khmer" style="font-size:1.05rem;margin-bottom:4px;">{{ v.km }}</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:4px;">{{ v.en }}</div>
+          <div style="font-size:0.85rem;color:#334155;font-style:italic;">"{{ v.example }}"</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Transitional Linking Phrases -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-link" style="color:var(--secondary);"></i> Transitional Phrases for Fluency
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      {% for t in topic.transitions %}
+        <span class="badge badge-b1" style="padding:8px 14px;font-size:0.9rem;text-transform:none;letter-spacing:normal;">
+          {{ t }}
+        </span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Model Sample Speech -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-quote-left" style="color:#7c3aed;"></i> Model Presentation (2.5-Minute Benchmark)
+      </div>
+      <button onclick="speakEnglish(document.getElementById('model-speech-text').innerText)" class="btn btn-outline btn-sm">
+        <i class="fas fa-play"></i> Listen to Full Model Speech
+      </button>
+    </div>
+    <div id="model-speech-text" style="font-size:1.05rem;line-height:1.8;color:#334155;background:#f8fafc;padding:20px;border-radius:8px;border:1px solid #e2e8f0;white-space:pre-line;">
+      {{ topic.sample_speech }}
+    </div>
+  </div>
+
+  <!-- Presentation Submission & Recording Pad -->
+  <div class="card" style="margin-bottom:40px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-record-vinyl" style="color:#dc2626;"></i> Deliver & Save Your Presentation
+      </div>
+      <div id="mic-status" style="font-size:0.85rem;">
+        <button type="button" id="toggle-mic-btn" class="btn btn-sm btn-secondary">
+          <i class="fas fa-microphone"></i> Start Mic
+        </button>
+      </div>
+    </div>
+
+    <form action="{{ url_for('speaking.submit_presentation', topic_number=topic.topic_number) }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="duration_seconds" id="duration_seconds" value="0">
+
+      <div class="form-group">
+        <label class="form-label">Speech Title</label>
+        <input type="text" name="presentation_title" class="form-control" value="My Presentation on {{ topic.title }}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Outline / Preparation Notes (Keywords & Transitions)</label>
+        <textarea name="outline_notes" class="form-control" rows="3" placeholder="Bullet points: Hook -> Point 1 -> Point 2 -> Conclusion..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;">Live Speech Transcript / Delivery Notes</label>
+          <span id="transcript-word-count" style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">0 words</span>
+        </div>
+        <textarea name="recorded_transcript" id="recorded-transcript" class="form-control" rows="6" placeholder="Start your presentation. Your voice will be transcribed here automatically in supported browsers, or you can record your spoken notes manually..."></textarea>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:18px;">
+        <div class="form-group">
+          <label class="form-label">Self-Evaluation Rating</label>
+          <select name="self_rating" class="form-control">
+            <option value="5">⭐⭐⭐⭐⭐ Excellent (Confident, stayed within 2–3 mins)</option>
+            <option value="4" selected>⭐⭐⭐⭐ Good (Minor hesitation, solid structure)</option>
+            <option value="3">⭐⭐⭐ Fair (Needs more transitional phrases)</option>
+            <option value="2">⭐⭐ Struggled (Speech was too short or lost train of thought)</option>
+            <option value="1">⭐ Needs Heavy Practice (Will retry immediately)</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">
+            <i class="fas fa-save"></i> Save Presentation & Receive Feedback (+40 XP)
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/speaking.js') }}"></script>
+{% endblock %}

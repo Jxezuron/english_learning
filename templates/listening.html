@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Listening Comprehension Center - English Learning Platform{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:24px;">
+  <span class="badge badge-a1" style="margin-bottom:6px;">Auditory Processing</span>
+  <h1 style="font-size:2rem;margin-bottom:6px;">Listening Comprehension Center</h1>
+  <p style="color:var(--text-muted);font-size:0.95rem;max-width:800px;">
+    Train your ear to natural conversational cadences, dialogue nuances, and contextual inferences. Exercises span 3 CEFR difficulty tiers with audio playback, comprehension questions, and revealed transcripts.
+  </p>
+</div>
+
+<!-- 3 Level Tabs / Sections -->
+<div style="display:flex;flex-direction:column;gap:30px;margin-bottom:40px;">
+  <!-- Beginner Tier -->
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span class="badge badge-a1" style="font-size:0.9rem;padding:6px 12px;">Tier 1: Beginner (A1–A2)</span>
+      <span style="font-size:0.9rem;color:var(--text-muted);">Short everyday exchanges, classroom dialogues, introductions & routines</span>
+    </div>
+
+    <div class="grid-3">
+      {% for ex in grouped['Beginner'] %}
+        <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span class="badge badge-b1">{{ ex.topic_category }}</span>
+              {% if ex.best_score is not none %}
+                <span style="font-size:0.8rem;font-weight:700;color:#16a34a;">Best: {{ ex.best_score }}%</span>
+              {% endif %}
+            </div>
+            <h3 style="font-size:1.2rem;color:#0f172a;margin-bottom:8px;">{{ ex.title }}</h3>
+            <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.5;margin-bottom:14px;">
+              {{ ex.situation_description }}
+            </p>
+          </div>
+          <div>
+            <a href="{{ url_for('listening.exercise_detail', exercise_id=ex.id) }}" class="btn btn-primary btn-sm" style="width:100%;">
+              <i class="fas fa-headphones"></i> Start Audio Exercise
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Intermediate Tier -->
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span class="badge badge-b1" style="font-size:0.9rem;padding:6px 12px;">Tier 2: Intermediate (B1)</span>
+      <span style="font-size:0.9rem;color:var(--text-muted);">Extended dialogues, wellness, friendship & descriptive discussions</span>
+    </div>
+
+    <div class="grid-3">
+      {% for ex in grouped['Intermediate'] %}
+        <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span class="badge badge-b1">{{ ex.topic_category }}</span>
+              {% if ex.best_score is not none %}
+                <span style="font-size:0.8rem;font-weight:700;color:#16a34a;">Best: {{ ex.best_score }}%</span>
+              {% endif %}
+            </div>
+            <h3 style="font-size:1.2rem;color:#0f172a;margin-bottom:8px;">{{ ex.title }}</h3>
+            <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.5;margin-bottom:14px;">
+              {{ ex.situation_description }}
+            </p>
+          </div>
+          <div>
+            <a href="{{ url_for('listening.exercise_detail', exercise_id=ex.id) }}" class="btn btn-primary btn-sm" style="width:100%;">
+              <i class="fas fa-headphones"></i> Start Audio Exercise
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Upper-Intermediate Tier -->
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span class="badge badge-b2" style="font-size:0.9rem;padding:6px 12px;">Tier 3: Upper-Intermediate (B2)</span>
+      <span style="font-size:0.9rem;color:var(--text-muted);">Nuanced debates, professional viewpoints & complex problem-solving</span>
+    </div>
+
+    <div class="grid-3">
+      {% for ex in grouped['Upper-intermediate'] %}
+        <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span class="badge badge-b1">{{ ex.topic_category }}</span>
+              {% if ex.best_score is not none %}
+                <span style="font-size:0.8rem;font-weight:700;color:#16a34a;">Best: {{ ex.best_score }}%</span>
+              {% endif %}
+            </div>
+            <h3 style="font-size:1.2rem;color:#0f172a;margin-bottom:8px;">{{ ex.title }}</h3>
+            <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.5;margin-bottom:14px;">
+              {{ ex.situation_description }}
+            </p>
+          </div>
+          <div>
+            <a href="{{ url_for('listening.exercise_detail', exercise_id=ex.id) }}" class="btn btn-primary btn-sm" style="width:100%;">
+              <i class="fas fa-headphones"></i> Start Audio Exercise
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

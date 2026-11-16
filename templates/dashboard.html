@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard - English Learning Platform{% endblock %}
+{% block content %}
+<!-- Welcome Header Banner -->
+<div class="card" style="margin-bottom:24px;background:linear-gradient(135deg, #1e3a8a, #0f766e);color:#ffffff;border:none;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+    <div>
+      <span class="badge" style="background:rgba(255,255,255,0.2);color:#ffffff;margin-bottom:8px;">
+        Level {{ analytics.level_num }}: {{ analytics.rank_title }}
+      </span>
+      <h1 style="color:#ffffff;font-size:2rem;margin:6px 0;">Welcome back, {{ analytics.user.username }}!</h1>
+      <p style="opacity:0.9;max-width:650px;">
+        Consistency creates fluency. You have accumulated <strong>{{ analytics.user.xp }} XP</strong> with an active 
+        <strong>{{ analytics.user.streak_days or 1 }}-day streak</strong>. Keep up the deliberate practice today!
+      </p>
+    </div>
+    <div style="text-align:right;">
+      <a href="{{ url_for('vocabulary.index') }}" class="btn" style="background:#ffffff;color:var(--primary-dark);font-weight:700;">
+        <i class="fas fa-layer-group"></i> Review Vocab Deck ({{ analytics.vocab_stats.due_today }} Due)
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Goals Section -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-bullseye" style="color:var(--primary);"></i> Today's Learning Targets
+    </div>
+    <a href="{{ url_for('planner.index') }}" class="btn btn-outline btn-sm">
+      <i class="fas fa-cog"></i> Adjust Daily Targets
+    </a>
+  </div>
+
+  <div class="grid-3">
+    <!-- Vocab Target -->
+    <div style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.9rem;">
+        <strong>Vocabulary Cards</strong>
+        <span>{{ daily_goals.words_actual }} / {{ daily_goals.words_target }} words</span>
+      </div>
+      <div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+        <div style="height:100%;background:var(--secondary);width:{{ daily_goals.words_pct }}%;"></div>
+      </div>
+    </div>
+
+    <!-- Lessons Target -->
+    <div style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.9rem;">
+        <strong>Grammar Lessons</strong>
+        <span>{{ daily_goals.lessons_actual }} / {{ daily_goals.lessons_target }} lessons</span>
+      </div>
+      <div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+        <div style="height:100%;background:var(--primary);width:{{ daily_goals.lessons_pct }}%;"></div>
+      </div>
+    </div>
+
+    <!-- Speaking Target -->
+    <div style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.9rem;">
+        <strong>Speaking Practice</strong>
+        <span>{{ daily_goals.speaking_actual }} / {{ daily_goals.speaking_target }} speeches</span>
+      </div>
+      <div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+        <div style="height:100%;background:var(--accent);width:{{ daily_goals.speaking_pct }}%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recommendations & Status Alerts -->
+<div class="grid-2" style="margin-bottom:24px;">
+  <!-- Pedagogical Recommendations -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-lightbulb" style="color:var(--accent);"></i> Recommended Next Actions
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      {% for rec in analytics.recommendations %}
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+          <div style="font-size:1.4rem;color:var(--primary);margin-top:2px;">
+            <i class="{{ rec.icon }}"></i>
+          </div>
+          <div style="flex:1;">
+            <h4 style="font-size:1rem;margin-bottom:4px;">{{ rec.title }}</h4>
+            <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:8px;">{{ rec.desc }}</p>
+            <a href="{{ rec.link }}" class="btn btn-sm btn-primary">Start Exercise &rarr;</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Diagnostic & Mistake Overview -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-chart-pie" style="color:var(--secondary);"></i> Learning Health Status
+      </div>
+    </div>
+    
+    <!-- Placement Status -->
+    <div style="margin-bottom:16px;padding:14px;background:#eff6ff;border-radius:8px;border-left:4px solid var(--primary);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <strong>Placement Diagnostic:</strong>
+          {% if latest_placement %}
+            <span class="badge badge-b1" style="margin-left:6px;">{{ latest_placement.level_assessment }}</span>
+            <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">
+              Score: {{ latest_placement.total_score }} / {{ latest_placement.max_score }} &bull; Completed: {{ latest_placement.completed_at[:10] }}
+            </div>
+          {% else %}
+            <span style="color:#d97706;font-size:0.88rem;">Not completed yet</span>
+          {% endif %}
+        </div>
+        <a href="{{ url_for('placement.index') }}" class="btn btn-outline btn-sm">
+          {% if latest_placement %}Retake Test{% else %}Take Test{% endif %}
+        </a>
+      </div>
+    </div>
+
+    <!-- Mistakes Alert -->
+    <div style="padding:14px;background:#fef2f2;border-radius:8px;border-left:4px solid var(--danger);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <strong style="color:#991b1b;">Mistake Notebook:</strong>
+          <span style="font-weight:700;color:#991b1b;margin-left:6px;">{{ unresolved_mistakes }} Unresolved Errors</span>
+          <div style="font-size:0.85rem;color:#7f1d1d;margin-top:4px;">
+            Review and retry mistakes to prevent habituation.
+          </div>
+        </div>
+        <a href="{{ url_for('mistakes.index') }}" class="btn btn-sm btn-outline" style="border-color:#fca5a5;color:#991b1b;">
+          Open Notebook
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Module Directory Grid -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-th-large" style="color:var(--primary);"></i> English Learning Workstations
+    </div>
+  </div>
+  <div class="grid-4">
+    <a href="{{ url_for('speaking.index') }}" class="card" style="text-align:center;padding:18px 12px;border-color:#bfdbfe;text-decoration:none;">
+      <div style="font-size:1.8rem;color:var(--primary);margin-bottom:8px;"><i class="fas fa-microphone-alt"></i></div>
+      <h4 style="color:#0f172a;margin-bottom:4px;font-size:1rem;">Speaking Studio</h4>
+      <div style="font-size:0.8rem;color:var(--text-muted);">4 Topics (2–3 Mins)</div>
+    </a>
+
+    <a href="{{ url_for('grammar.index') }}" class="card" style="text-align:center;padding:18px 12px;border-color:#ccfbf1;text-decoration:none;">
+      <div style="font-size:1.8rem;color:var(--secondary);margin-bottom:8px;"><i class="fas fa-book"></i></div>
+      <h4 style="color:#0f172a;margin-bottom:4px;font-size:1rem;">Grammar Lessons</h4>
+      <div style="font-size:0.8rem;color:var(--text-muted);">10 Modules + Quizzes</div>
+    </a>
+
+    <a href="{{ url_for('vocabulary.index') }}" class="card" style="text-align:center;padding:18px 12px;border-color:#fef3c7;text-decoration:none;">
+      <div style="font-size:1.8rem;color:var(--accent);margin-bottom:8px;"><i class="fas fa-layer-group"></i></div>
+      <h4 style="color:#0f172a;margin-bottom:4px;font-size:1rem;">Vocabulary SRS</h4>
+      <div style="font-size:0.8rem;color:var(--text-muted);">Khmer Translations</div>
+    </a>
+
+    <a href="{{ url_for('listening.index') }}" class="card" style="text-align:center;padding:18px 12px;border-color:#e0e7ff;text-decoration:none;">
+      <div style="font-size:1.8rem;color:#4338ca;margin-bottom:8px;"><i class="fas fa-headphones"></i></div>
+      <h4 style="color:#0f172a;margin-bottom:4px;font-size:1rem;">Listening Center</h4>
+      <div style="font-size:0.8rem;color:var(--text-muted);">3 Difficulty Levels</div>
+    </a>
+
+    <a href="{{ url_for('pronunciation.index') }}" class="card" style="text-align:center;padding:18px 12px;border-color:#e2e8f0;text-decoration:none;">
+      <div style="font-size:1.8rem;color:#0284c7;margin-bottom:8px;"><i class="fas fa-comments"></i></div>
+      <h4 style="color:#0f172a;margin-bottom:4px;font-size:1rem;">Pronunciation Lab</h4>
+      <div style="font-size:0.8rem;color:var(--text-muted);">Voice Recognition Diff</div>
+    </a>
+
+    <a href="{{ url_for('writing.index') }}" class="card" style="text-align:center;padding:18px 12px;border-color:#e2e8f0;text-decoration:none;">
+      <div style="font-size:1.8rem;color:#7c3aed;margin-bottom:8px;"><i class="fas fa-pen-fancy"></i></div>
+      <h4 style="color:#0f172a;margin-bottom:4px;font-size:1rem;">Writing Workshop</h4>
+      <div style="font-size:0.8rem;color:var(--text-muted);">Checklists & Linking Words</div>
+    </a>
+
+    <a href="{{ url_for('planner.index') }}" class="card" style="text-align:center;padding:18px 12px;border-color:#e2e8f0;text-decoration:none;">
+      <div style="font-size:1.8rem;color:#059669;margin-bottom:8px;"><i class="fas fa-calendar-check"></i></div>
+      <h4 style="color:#0f172a;margin-bottom:4px;font-size:1rem;">Study Planner</h4>
+      <div style="font-size:0.8rem;color:var(--text-muted);">Weekly Calendar</div>
+    </a>
+
+    <a href="{{ url_for('progress.index') }}" class="card" style="text-align:center;padding:18px 12px;border-color:#e2e8f0;text-decoration:none;">
+      <div style="font-size:1.8rem;color:#b45309;margin-bottom:8px;"><i class="fas fa-chart-line"></i></div>
+      <h4 style="color:#0f172a;margin-bottom:4px;font-size:1rem;">Analytics & Badges</h4>
+      <div style="font-size:0.8rem;color:var(--text-muted);">Retention & Mastery</div>
+    </a>
+  </div>
+</div>
+{% endblock %}

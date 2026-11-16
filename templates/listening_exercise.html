@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}{{ exercise.title }} - Listening Comprehension{% endblock %}
+{% block content %}
+<div style="max-width:850px;margin:0 auto;">
+  <!-- Navigation Header -->
+  <div style="margin-bottom:16px;">
+    <a href="{{ url_for('listening.index') }}" class="btn btn-outline btn-sm">
+      <i class="fas fa-arrow-left"></i> Back to Listening Center
+    </a>
+  </div>
+
+  <!-- Exercise Title Card -->
+  <div class="card" style="margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span class="badge badge-{{ exercise.difficulty_level[:2]|lower }}">{{ exercise.difficulty_level }}</span>
+      <span class="badge badge-b1">{{ exercise.topic_category }}</span>
+    </div>
+    <h1 style="font-size:2rem;color:#0f172a;margin-bottom:8px;">{{ exercise.title }}</h1>
+    <p style="font-size:1rem;color:var(--text-muted);line-height:1.6;">{{ exercise.situation_description }}</p>
+  </div>
+
+  <!-- Audio Player Console Widget -->
+  <div class="card" style="background:#0f172a;color:#ffffff;padding:24px;border-radius:12px;margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <button id="play-dialogue-btn" class="btn btn-secondary btn-lg" style="border-radius:50%;width:56px;height:56px;padding:0;font-size:1.3rem;">
+          <i class="fas fa-play" id="play-dialogue-icon"></i>
+        </button>
+        <div>
+          <div style="font-weight:700;font-size:1.1rem;color:#ffffff;">Audio Dialogue Track</div>
+          <div style="font-size:0.85rem;color:#94a3b8;" id="audio-playback-status">Ready to play. Listen carefully before answering.</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button id="audio-speed-btn" class="btn btn-outline btn-sm" style="color:#ffffff;border-color:#475569;">
+          Speed: <span id="speed-label">1.0x</span>
+        </button>
+        <button id="toggle-transcript-btn" class="btn btn-outline btn-sm" style="color:#ffffff;border-color:#475569;">
+          <i class="fas fa-file-alt"></i> Reveal Transcript
+        </button>
+      </div>
+    </div>
+
+    <!-- Hidden Raw Script Container for TTS -->
+    <div id="hidden-audio-script" style="display:none;">{{ exercise.audio_script }}</div>
+
+    <!-- Collapsible Transcript Display -->
+    <div id="transcript-display-box" style="display:{% if result %}block{% else %}none{% endif %};margin-top:20px;padding:16px;background:rgba(255,255,255,0.08);border-radius:8px;border:1px solid rgba(255,255,255,0.15);font-size:0.95rem;line-height:1.8;white-space:pre-line;">
+      <div style="color:#38bdf8;font-weight:700;margin-bottom:6px;"><i class="fas fa-align-left"></i> Official Dialogue Transcript:</div>
+      {{ exercise.audio_script }}
+    </div>
+  </div>
+
+  <!-- Previous Result Card if submitted -->
+  {% if result %}
+    <div class="card" style="margin-bottom:24px;border-left:5px solid {% if result.percentage >= 70 %}var(--success){% else %}var(--accent){% endif %};">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h3 style="margin-bottom:4px;">Comprehension Result: {{ result.score }} / {{ result.max_score }} ({{ result.percentage }}%)</h3>
+          <p style="color:var(--text-muted);font-size:0.9rem;">Earned <strong>+{{ result.xp_earned }} XP</strong>. Detailed feedback for each question is shown below.</p>
+        </div>
+        <div>
+          <a href="{{ url_for('listening.exercise_detail', exercise_id=exercise.id) }}" class="btn btn-outline btn-sm">
+            <i class="fas fa-redo"></i> Try Again
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Questions Form -->
+  <div class="card" style="margin-bottom:40px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-tasks" style="color:var(--primary);"></i> Comprehension Questions
+      </div>
+    </div>
+
+    <form action="{{ url_for('listening.submit_exercise', exercise_id=exercise.id) }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      {% for q in exercise.questions %}
+        {% set q_idx = loop.index0 %}
+        <div style="padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:18px;">
+          <div style="font-weight:700;font-size:1.05rem;color:#0f172a;margin-bottom:12px;">
+            Question {{ loop.index }}: {{ q.question }}
+          </div>
+
+          <!-- Multiple Choice or True/False -->
+          {% if q.type in ('mcq', 'true_false') %}
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              {% for opt in q.options %}
+                <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;">
+                  <input type="radio" name="q_{{ q_idx }}" value="{{ opt }}" required>
+                  <span>{{ opt }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          {% elif q.type == 'fill_blank' %}
+            <!-- Fill in the blank -->
+            <div style="margin-top:8px;">
+              <input type="text" name="q_{{ q_idx }}" class="form-control" placeholder="Type the missing word from the audio..." required style="max-width:300px;">
+            </div>
+          {% endif %}
+
+          <!-- Feedback if graded -->
+          {% if result and result.feedback and result.feedback[q_idx] %}
+            {% set fb = result.feedback[q_idx] %}
+            <div style="margin-top:10px;padding:10px;border-radius:6px;background:{% if fb.is_correct %}#f0fdf4{% else %}#fef2f2{% endif %};font-size:0.9rem;">
+              <strong>{% if fb.is_correct %}✅ Correct!{% else %}❌ Incorrect.{% endif %}</strong>
+              {% if not fb.is_correct %}
+                <span>Expected: <strong>{{ fb.correct_answer }}</strong> &bull; </span>
+              {% endif %}
+              <span>{{ fb.explanation }}</span>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <div style="text-align:right;">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fas fa-check-circle"></i> Submit Answers & Check Comprehension
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let isPlaying = false;
+  let playbackSpeed = 1.0;
+  const scriptText = document.getElementById('hidden-audio-script').innerText;
+  const playBtn = document.getElementById('play-dialogue-btn');
+  const playIcon = document.getElementById('play-dialogue-icon');
+  const statusEl = document.getElementById('audio-playback-status');
+  const speedBtn = document.getElementById('audio-speed-btn');
+  const speedLbl = document.getElementById('speed-label');
+  const transcriptBox = document.getElementById('transcript-display-box');
+  const toggleTranscriptBtn = document.getElementById('toggle-transcript-btn');
+
+  playBtn.addEventListener('click', () => {
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      isPlaying = false;
+      playIcon.className = 'fas fa-play';
+      statusEl.textContent = 'Audio paused.';
+    } else {
+      speakEnglish(scriptText, playbackSpeed);
+      isPlaying = true;
+      playIcon.className = 'fas fa-pause';
+      statusEl.textContent = 'Playing audio track... Listen carefully.';
+    }
+  });
+
+  speedBtn.addEventListener('click', () => {
+    playbackSpeed = (playbackSpeed === 1.0) ? 0.8 : 1.0;
+    speedLbl.textContent = `${playbackSpeed}x`;
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      speakEnglish(scriptText, playbackSpeed);
+    }
+  });
+
+  toggleTranscriptBtn.addEventListener('click', () => {
+    const isHidden = (transcriptBox.style.display === 'none');
+    transcriptBox.style.display = isHidden ? 'block' : 'none';
+    toggleTranscriptBtn.innerHTML = isHidden 
+      ? '<i class="fas fa-eye-slash"></i> Hide Transcript' 
+      : '<i class="fas fa-file-alt"></i> Reveal Transcript';
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Personal Study Planner - English Learning Platform{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:24px;">
+  <span class="badge badge-a1" style="margin-bottom:6px;">Deliberate Practice Schedule</span>
+  <h1 style="font-size:2rem;margin-bottom:6px;">Personal Study Planner</h1>
+  <p style="color:var(--text-muted);font-size:0.95rem;">
+    Structure your weekly routine across grammar, speaking, vocabulary, and writing to sustain your learning streak.
+  </p>
+</div>
+
+<!-- Daily Goals Customizer -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-sliders-h" style="color:var(--primary);"></i> Customize Daily Learning Targets
+    </div>
+  </div>
+  <form action="{{ url_for('planner.update_goals') }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="grid-4" style="margin-bottom:14px;">
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Daily Study Time (Mins)</label>
+        <input type="number" name="daily_goal_minutes" class="form-control" value="{{ user.daily_goal_minutes or 20 }}" min="5" max="180">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Vocabulary Cards / Day</label>
+        <input type="number" name="daily_goal_words" class="form-control" value="{{ user.daily_goal_words or 10 }}" min="1" max="100">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Grammar Lessons / Day</label>
+        <input type="number" name="daily_goal_lessons" class="form-control" value="{{ user.daily_goal_lessons or 1 }}" min="1" max="10">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Speaking Speeches / Day</label>
+        <input type="number" name="daily_goal_speaking" class="form-control" value="{{ user.daily_goal_speaking or 1 }}" min="1" max="10">
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <button type="submit" class="btn btn-secondary btn-sm">
+        <i class="fas fa-check"></i> Save Daily Targets
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Schedule a Task Modal/Form -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-plus-circle" style="color:var(--secondary);"></i> Schedule a Study Task
+    </div>
+  </div>
+  <form action="{{ url_for('planner.add_task') }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div style="display:grid;grid-template-columns:1.5fr 1.5fr 3fr auto;gap:12px;">
+      <input type="date" name="plan_date" class="form-control" value="{{ today_str }}" required>
+      <select name="task_type" class="form-control">
+        <option value="grammar">Grammar Lesson</option>
+        <option value="speaking">Speaking Practice</option>
+        <option value="vocabulary">Vocabulary Revision</option>
+        <option value="listening">Listening Exercise</option>
+        <option value="writing">Writing Workshop</option>
+      </select>
+      <input type="text" name="task_title" class="form-control" placeholder="e.g. Master Present Perfect Quiz or Topic 1 Speech..." required>
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-calendar-plus"></i> Add to Calendar
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Weekly Study Calendar (Mon - Sun) -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-calendar-alt" style="color:var(--primary);"></i> Weekly Study Calendar
+    </div>
+    <span class="badge badge-streak"><i class="fas fa-fire"></i> {{ user.streak_days or 1 }} Day Streak Active</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(7, 1fr);gap:12px;overflow-x:auto;">
+    {% for day in week_days %}
+      <div style="background:{% if day.is_today %}#eff6ff{% else %}#f8fafc{% endif %};border:1px solid {% if day.is_today %}var(--primary-light){% else %}#e2e8f0{% endif %};border-radius:8px;padding:12px;min-height:220px;display:flex;flex-direction:column;">
+        <div style="border-bottom:1px solid #cbd5e1;padding-bottom:6px;margin-bottom:8px;text-align:center;">
+          <div style="font-weight:700;font-size:0.95rem;color:{% if day.is_today %}var(--primary){% else %}#334155{% endif %};">
+            {{ day.day_name[:3] }}
+          </div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">{{ day.date_formatted }}</div>
+          {% if day.is_today %}
+            <span class="badge badge-a1" style="font-size:0.65rem;padding:2px 6px;">Today</span>
+          {% endif %}
+        </div>
+
+        <!-- Day Tasks -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          {% for t in day.tasks %}
+            <div style="padding:6px 8px;border-radius:4px;font-size:0.8rem;background:#ffffff;border:1px solid #e2e8f0;display:flex;align-items:flex-start;gap:6px;">
+              <input type="checkbox" {% if t.is_completed %}checked{% endif %} 
+                     onchange="toggleTaskDone({{ t.id }}, this)" style="margin-top:2px;cursor:pointer;">
+              <span style="{% if t.is_completed %}text-decoration:line-through;color:#94a3b8;{% else %}color:#0f172a;{% endif %}line-height:1.3;">
+                {{ t.task_title }}
+              </span>
+            </div>
+          {% else %}
+            <div style="font-size:0.75rem;color:#94a3b8;text-align:center;margin-top:20px;">
+              No tasks scheduled
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function toggleTaskDone(taskId, checkbox) {
+    try {
+      const res = await postData(`/planner/toggle/${taskId}`, {});
+      const textSpan = checkbox.nextElementSibling;
+      if (res.is_completed === 1) {
+        textSpan.style.textDecoration = 'line-through';
+        textSpan.style.color = '#94a3b8';
+        showToast("Task completed! (+15 XP)", "success");
+      } else {
+        textSpan.style.textDecoration = 'none';
+        textSpan.style.color = '#0f172a';
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+</script>
+{% endblock %}

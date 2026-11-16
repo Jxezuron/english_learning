@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Pronunciation Laboratory - English Learning Platform{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+  <!-- Header Bar -->
+  <div class="card" style="margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+      <div>
+        <span class="badge badge-a1" style="margin-bottom:6px;">Acoustic Articulation</span>
+        <h1 style="font-size:2rem;margin-bottom:6px;">Pronunciation Laboratory</h1>
+        <p style="color:var(--text-muted);font-size:0.95rem;">
+          Develop crisp English articulation through audio shadowing, minimal pair contrast drills, sentence stress training, and real-time speech comparison.
+        </p>
+      </div>
+      <div>
+        <span class="badge badge-b1"><i class="fas fa-microphone"></i> Web Speech Powered</span>
+      </div>
+    </div>
+
+    <!-- Browser Compatibility Advisory Banner -->
+    <div style="margin-top:16px;background:#f0fdf4;border-left:4px solid var(--secondary);padding:14px;border-radius:6px;font-size:0.88rem;color:#065f46;line-height:1.5;">
+      <strong><i class="fas fa-info-circle"></i> Browser & Technology Notice:</strong>
+      Pronunciation speech recognition utilizes the HTML5 Web Speech API (supported in Google Chrome, Microsoft Edge, and Safari). Text-to-speech works across all modern browsers. 
+      <em>Please note: Automated browser speech recognition is an interactive educational practice aid; it does not replace a certified phonetics specialist or professional oral examiner.</em>
+    </div>
+  </div>
+
+  <!-- Drills List -->
+  <div style="display:flex;flex-direction:column;gap:18px;margin-bottom:40px;">
+    {% for item in items %}
+      <div class="card pronunciation-item" data-target="{{ item.target_text }}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div>
+            <span class="badge badge-{{ item.difficulty[:2]|lower }}">{{ item.difficulty }}</span>
+            <span class="badge badge-b1" style="margin-left:6px;">{{ item.focus_sound }}</span>
+          </div>
+          <span style="font-size:0.8rem;text-transform:uppercase;color:var(--text-muted);font-weight:700;">{{ item.item_type }}</span>
+        </div>
+
+        <div style="font-size:1.4rem;font-weight:700;color:var(--primary-dark);margin-bottom:4px;">
+          {{ item.target_text }}
+        </div>
+
+        {% if item.phonetic %}
+          <div style="font-family:monospace;font-size:1rem;color:var(--text-muted);margin-bottom:8px;">
+            {{ item.phonetic }}
+          </div>
+        {% endif %}
+
+        <div style="font-size:0.9rem;color:#334155;background:#f8fafc;padding:10px 14px;border-radius:6px;border-left:3px solid var(--accent);margin-bottom:14px;">
+          <strong>Phonetic Tip:</strong> {{ item.tip }}
+        </div>
+
+        <!-- Controls: Audio & Microphone -->
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm btn-listen">
+              <i class="fas fa-volume-up"></i> Listen (Normal)
+            </button>
+            <button class="btn btn-outline btn-sm btn-listen-slow">
+              <i class="fas fa-tachometer-alt"></i> Listen (Slow 0.7x)
+            </button>
+          </div>
+
+          <div>
+            <button class="btn btn-secondary btn-sm btn-record-speech">
+              <i class="fas fa-microphone"></i> Test My Pronunciation
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Feedback Container -->
+        <div class="pronunciation-status"></div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/pronunciation.js') }}"></script>
+{% endblock %}

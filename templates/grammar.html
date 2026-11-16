@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Grammar Lessons & Interactive Quizzes - English Learning Platform{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:24px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <div>
+      <span class="badge badge-a1" style="margin-bottom:6px;">Structured Curriculum</span>
+      <h1 style="font-size:2rem;margin-bottom:6px;">Grammar Mastery Studio</h1>
+      <p style="color:var(--text-muted);font-size:0.95rem;">Clear formulas, real-world examples with Khmer translations, common mistake analyses, and quizzes.</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a href="{{ url_for('grammar.index') }}" class="btn btn-sm {% if not selected_level and not selected_category %}btn-primary{% else %}btn-outline{% endif %}">All Lessons</a>
+      <a href="{{ url_for('grammar.index', level='A1') }}" class="btn btn-sm {% if selected_level == 'A1' %}btn-primary{% else %}btn-outline{% endif %}">A1 Beginner</a>
+      <a href="{{ url_for('grammar.index', level='A2') }}" class="btn btn-sm {% if selected_level == 'A2' %}btn-primary{% else %}btn-outline{% endif %}">A2 Elementary</a>
+      <a href="{{ url_for('grammar.index', level='B1') }}" class="btn btn-sm {% if selected_level == 'B1' %}btn-primary{% else %}btn-outline{% endif %}">B1 Intermediate</a>
+    </div>
+  </div>
+</div>
+
+<!-- Lessons Grid -->
+<div class="grid-2">
+  {% for lesson in lessons %}
+    <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span class="badge badge-{{ lesson.cefr_level|lower }}">{{ lesson.cefr_level }}</span>
+          <span style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">
+            <i class="fas fa-question-circle"></i> {{ lesson.quiz_count }} Quiz Items
+          </span>
+        </div>
+
+        <h3 style="font-size:1.3rem;margin-bottom:8px;color:#0f172a;">
+          {{ lesson.title }}
+        </h3>
+
+        <p style="font-size:0.95rem;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">
+          {{ lesson.summary }}
+        </p>
+
+        {% if lesson.formula %}
+          <div style="background:#f8fafc;border-left:3px solid var(--primary);padding:8px 12px;border-radius:4px;font-family:monospace;font-size:0.85rem;color:#334155;margin-bottom:14px;">
+            <strong>Formula:</strong> {{ lesson.formula }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px;">
+        <span style="font-size:0.85rem;color:{% if lesson.mastered_quizzes > 0 %}#16a34a{% else %}#64748b{% endif %};font-weight:600;">
+          {% if lesson.mastered_quizzes > 0 %}
+            <i class="fas fa-check-circle"></i> {{ lesson.mastered_quizzes }} / {{ lesson.quiz_count }} Mastered
+          {% else %}
+            <i class="far fa-circle"></i> Not Attempted
+          {% endif %}
+        </span>
+        <a href="{{ url_for('grammar.lesson_detail', slug=lesson.slug) }}" class="btn btn-primary btn-sm">
+          Study Lesson &rarr;
+        </a>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

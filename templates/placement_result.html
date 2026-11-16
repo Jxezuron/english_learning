@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Placement Diagnostic Results - English Learning Platform{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+  <!-- Result Score Banner -->
+  <div class="card" style="margin-bottom:24px;text-align:center;padding:36px 20px;background:linear-gradient(135deg, #1e40af, #0d9488);color:#ffffff;border:none;">
+    <span class="badge" style="background:rgba(255,255,255,0.25);color:#ffffff;padding:6px 14px;font-size:0.9rem;margin-bottom:12px;">
+      Diagnostic Complete
+    </span>
+    <h1 style="color:#ffffff;font-size:2.8rem;margin:8px 0;">{{ result.level }}</h1>
+    <p style="font-size:1.15rem;opacity:0.95;max-width:650px;margin:0 auto 16px auto;">
+      {{ result.level_desc }}
+    </p>
+    <div style="font-size:1.4rem;font-weight:700;">
+      Score: {{ result.score }} / {{ result.max_score }} ({{ result.percentage }}%)
+    </div>
+  </div>
+
+  <!-- Strong vs Weak Topics -->
+  <div class="grid-2" style="margin-bottom:24px;">
+    <!-- Strong Grammar Topics -->
+    <div class="card" style="border-left:4px solid var(--success);">
+      <div class="card-header">
+        <div class="card-title" style="color:#14532d;">
+          <i class="fas fa-check-circle" style="color:var(--success);"></i> Strong Competencies (&ge; 65%)
+        </div>
+      </div>
+      {% if result.strong_topics %}
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          {% for st in result.strong_topics %}
+            <span class="badge" style="background:#dcfce7;color:#15803d;padding:6px 12px;font-size:0.85rem;">
+              {{ st }}
+            </span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color:var(--text-muted);font-size:0.9rem;">Keep practicing foundational grammar lessons to develop strong topics.</p>
+      {% endif %}
+    </div>
+
+    <!-- Weak Grammar Topics -->
+    <div class="card" style="border-left:4px solid var(--danger);">
+      <div class="card-header">
+        <div class="card-title" style="color:#7f1d1d;">
+          <i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i> Areas for Priority Focus (&lt; 65%)
+        </div>
+      </div>
+      {% if result.weak_topics %}
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          {% for wt in result.weak_topics %}
+            <span class="badge" style="background:#fee2e2;color:#991b1b;padding:6px 12px;font-size:0.85rem;">
+              {{ wt }}
+            </span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color:#15803d;font-size:0.9rem;">Outstanding accuracy across all evaluated categories!</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recommended Personalized Learning Path -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-route" style="color:var(--primary);"></i> Your Personalized Learning Path
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      {% for path in result.recommended_path %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+          <div>
+            <span class="badge badge-a1" style="margin-bottom:4px;">{{ path.type }}</span>
+            <h4 style="font-size:1.05rem;color:#0f172a;">{{ path.title }}</h4>
+            <div style="font-size:0.85rem;color:var(--text-muted);">{{ path.reason }}</div>
+          </div>
+          <div>
+            {% if path.type == 'Grammar Lesson' %}
+              <a href="{{ url_for('grammar.lesson_detail', slug=path.slug) }}" class="btn btn-sm btn-primary">Start Lesson</a>
+            {% elif path.type == 'Speaking Module' %}
+              <a href="{{ url_for('speaking.topic_detail', topic_number=1) }}" class="btn btn-sm btn-secondary">Open Topic</a>
+            {% else %}
+              <a href="{{ url_for('vocabulary.index') }}" class="btn btn-sm btn-outline">Review Deck</a>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Detailed Question Breakdown -->
+  <div class="card" style="margin-bottom:30px;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-list-ol"></i> Detailed Question-by-Question Diagnostic
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      {% for item in result.detailed_results %}
+        <div style="padding:14px;border-radius:8px;border:1px solid #e2e8f0;background:{% if item.is_correct %}#f0fdf4{% else %}#fef2f2{% endif %};">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <strong style="color:#0f172a;">Q{{ item.index }}. {{ item.question }}</strong>
+            <span class="badge {% if item.is_correct %}badge-b1{% else %}badge-b2{% endif %}">{{ item.category }}</span>
+          </div>
+          <div style="font-size:0.92rem;margin-bottom:4px;">
+            <strong>Your answer:</strong> <span style="color:{% if item.is_correct %}#15803d{% else %}#b91c1c{% endif %};font-weight:600;">{{ item.selected }}</span>
+            {% if not item.is_correct %}
+              &bull; <strong>Correct answer:</strong> <span style="color:#15803d;font-weight:600;">{{ item.correct_answer }}</span>
+            {% endif %}
+          </div>
+          <div style="font-size:0.88rem;color:#475569;margin-top:6px;background:rgba(255,255,255,0.7);padding:8px;border-radius:6px;">
+            <strong>Explanation:</strong> {{ item.explanation }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Retake and Back to Dashboard Buttons -->
+  <div style="text-align:center;margin-bottom:50px;">
+    <a href="{{ url_for('placement.index') }}" class="btn btn-outline" style="margin-right:12px;">
+      <i class="fas fa-redo"></i> Retake Placement Assessment
+    </a>
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">
+      <i class="fas fa-home"></i> Go to Learning Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}

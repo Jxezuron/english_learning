@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Smart Spaced Repetition Vocabulary - English Learning Platform{% endblock %}
+{% block content %}
+<div style="max-width:800px;margin:0 auto;">
+  <!-- Header Bar -->
+  <div class="card" style="margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+      <div>
+        <span class="badge badge-a1" style="margin-bottom:6px;">Memory Science (SuperMemo SM-2)</span>
+        <h1 style="font-size:2rem;margin-bottom:6px;">Smart Vocabulary Revision</h1>
+        <p style="color:var(--text-muted);font-size:0.95rem;">
+          Retain words permanently by reviewing them at the exact moment before they fade from memory.
+        </p>
+      </div>
+      <div>
+        <a href="{{ url_for('vocabulary.dictionary') }}" class="btn btn-outline btn-sm">
+          <i class="fas fa-book"></i> Full Word Bank
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Ribbon -->
+  <div class="grid-4" style="margin-bottom:24px;">
+    <div class="card" style="text-align:center;padding:14px;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--primary);">{{ stats.due_today }}</div>
+      <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;">Due Today</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--secondary);">{{ stats.learning_words }}</div>
+      <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;">Learning</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--success);">{{ stats.mastered_words }}</div>
+      <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;">Mastered</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--accent);">{{ stats.retention_rate }}%</div>
+      <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;">Retention Rate</div>
+    </div>
+  </div>
+
+  {% if due_cards and due_cards|length > 0 %}
+    <!-- Flashcard Widget -->
+    <div class="flashcard-wrapper">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span id="srs-counter" style="font-weight:700;color:var(--text-muted);font-size:0.9rem;">Card 1 of {{ due_cards|length }}</span>
+        <span style="font-size:0.85rem;color:var(--text-muted);">
+          <i class="fas fa-keyboard"></i> Shortcuts: <strong>Space</strong> (Flip) &bull; <strong>1-4</strong> (Rate)
+        </span>
+      </div>
+
+      <!-- The Flip Card -->
+      <div class="flashcard" id="srs-flashcard">
+        <!-- Top Toolbar on Card -->
+        <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:12px;">
+          <button id="card-audio-btn" class="btn btn-outline btn-sm" style="border:none;" title="Pronounce Word">
+            <i class="fas fa-volume-up" style="font-size:1.2rem;color:var(--primary);"></i>
+          </button>
+          <button id="card-fav-btn" class="btn btn-outline btn-sm" style="border:none;" title="Bookmark to Favorites">
+            <i class="far fa-star" style="font-size:1.2rem;"></i>
+          </button>
+        </div>
+
+        <!-- Card Front: Word & Phonetic -->
+        <div id="card-front" style="width:100%;">
+          <div class="flashcard-word" id="card-word">Loading...</div>
+          <div class="flashcard-phonetic" id="card-phonetic">/phonetic/</div>
+          <div class="flashcard-pos" id="card-pos">noun</div>
+          <span class="badge badge-a1" id="card-category">Daily Life</span>
+          <div style="margin-top:30px;font-size:0.9rem;color:var(--text-muted);">
+            <i class="fas fa-hand-pointer"></i> Click card or press <strong>Space</strong> to reveal definition & Khmer translation
+          </div>
+        </div>
+
+        <!-- Card Back: Definitions & Examples -->
+        <div id="card-back" style="display:none;width:100%;">
+          <div class="flashcard-definition" id="card-def-en">Definition</div>
+          <div class="flashcard-km text-khmer" id="card-def-km">អត្ថន័យជាភាសាខ្មែរ</div>
+          <div class="flashcard-example" id="card-example">"Example sentence goes here."</div>
+        </div>
+      </div>
+
+      <!-- Spaced Repetition Feedback Buttons -->
+      <div class="srs-actions" id="srs-actions" style="display:none;">
+        <button class="btn btn-srs-again btn-srs-rating" data-rating="again">
+          <div><strong>Again</strong> (1)</div>
+          <div style="font-size:0.75rem;">Forgot completely</div>
+        </button>
+        <button class="btn btn-srs-hard btn-srs-rating" data-rating="hard">
+          <div><strong>Hard</strong> (2)</div>
+          <div style="font-size:0.75rem;">Struggled</div>
+        </button>
+        <button class="btn btn-srs-good btn-srs-rating" data-rating="good">
+          <div><strong>Good</strong> (3)</div>
+          <div style="font-size:0.75rem;">Remembered</div>
+        </button>
+        <button class="btn btn-srs-easy btn-srs-rating" data-rating="easy">
+          <div><strong>Easy</strong> (4)</div>
+          <div style="font-size:0.75rem;">Effortless</div>
+        </button>
+      </div>
+
+      <!-- Finished State -->
+      <div id="srs-finished" style="display:none;text-align:center;padding:50px 20px;background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;box-shadow:var(--shadow-md);">
+        <div style="font-size:3.5rem;color:var(--success);margin-bottom:12px;"><i class="fas fa-check-circle"></i></div>
+        <h2 style="font-size:1.8rem;margin-bottom:8px;">All Due Cards Reviewed!</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;">Your long-term memory pathways are reinforced. Excellent job!</p>
+        <div>
+          <a href="{{ url_for('vocabulary.dictionary') }}" class="btn btn-outline" style="margin-right:10px;">Explore Full Dictionary</a>
+          <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">Return to Dashboard</a>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="card" style="text-align:center;padding:50px 20px;">
+      <div style="font-size:3.5rem;color:var(--success);margin-bottom:12px;"><i class="fas fa-calendar-check"></i></div>
+      <h2 style="margin-bottom:8px;">You're All Caught Up!</h2>
+      <p style="color:var(--text-muted);margin-bottom:24px;">There are no vocabulary cards currently due for spaced review today.</p>
+      <div>
+        <a href="{{ url_for('vocabulary.dictionary') }}" class="btn btn-primary">Browse Full Vocabulary Dictionary</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/vocabulary.js') }}"></script>
+<script>
+  const dueCardsData = {{ due_cards|tojson|safe }};
+  if (dueCardsData && dueCardsData.length > 0) {
+    initVocabSRS(dueCardsData);
+  }
+</script>
+{% endblock %}
